@@ -15,23 +15,6 @@ class _StoreStatusContentState extends State<StoreStatusContent> {
   DocumentReference get _pharmacyRef =>
       FirebaseFirestore.instance.collection('pharmacies').doc(_pharmacyId);
 
-  bool _saving = false;
-
-  Future<void> _setStatus(bool isOpen) async {
-    setState(() => _saving = true);
-    try {
-      await _pharmacyRef.set({'isOpen': isOpen}, SetOptions(merge: true));
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating status: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
