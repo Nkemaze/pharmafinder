@@ -1,0 +1,21 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "pharma-finder-6d99d",
+          "appId": "1:1024997581907:android:aaab7ee25af3b8c99092a6",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "pharma-finder-6d99d",
+          "configurations": {
+            "web": "1:1024997581907:web:92aaf8b02e6d0ff39092a6"
+          }
+        }
+      }
+    }
+  }
+}

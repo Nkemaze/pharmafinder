@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1024997581907",
+    "project_id": "pharma-finder-6d99d",
+    "storage_bucket": "pharma-finder-6d99d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1024997581907:android:43397de4820c40a89092a6",
+        "android_client_info": {
+          "package_name": "com.devbless.pharmafinder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRbra2FVcdy2ohw9m5PfzHrxyIrSWxz0k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1024997581907:android:aaab7ee25af3b8c99092a6",
+        "android_client_info": {
+          "package_name": "com.example.pharmacy_web_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRbra2FVcdy2ohw9m5PfzHrxyIrSWxz0k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
