@@ -28,10 +28,14 @@ service cloud.firestore {
     }
 
     match /pharmacies/{pharmacyId} {
-      allow read, write: if isAdmin() ||
+      // Public read: the customer app must find drugs without logging in.
+      allow read: if true;
+      // Writes stay restricted to the owning pharmacy or an admin.
+      allow write: if isAdmin() ||
         (isSignedIn() && request.auth.uid == pharmacyId);
       match /{document=**} {
-        allow read, write: if isAdmin() ||
+        allow read: if true;
+        allow write: if isAdmin() ||
           (isSignedIn() && request.auth.uid == pharmacyId);
       }
     }
