@@ -76,6 +76,7 @@ class _MainShellState extends State<MainShell> {
           SidebarNav(
             selectedIndex: _selectedIndex,
             onItemSelected: _onNavItemSelected,
+            onLogout: () => FirebaseAuth.instance.signOut(),
           ),
           Expanded(
             child: Column(

@@ -1,30 +1,85 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:pharmacy_web_app/main.dart';
+import 'package:pharmacy_web_app/models/drug.dart';
+import 'package:pharmacy_web_app/services/pharmacy_hours.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('Drug.fromMap', () {
+    test('parses modern fields', () {
+      final drug = Drug.fromMap('drug1', {
+        'name': 'Paracetamol',
+        'pricePerUnit': 500,
+        'pricePerPacket': 4500,
+        'packetSize': 10,
+        'unitLabel': 'tablet',
+        'quantity': 25,
+        'category': 'Pain Relief',
+        'imageUrl': 'https://example.com/img.png',
+      });
+      expect(drug.name, 'Paracetamol');
+      expect(drug.pricePerUnit, 500);
+      expect(drug.pricePerPacket, 4500);
+      expect(drug.packetSize, 10);
+      expect(drug.unitLabel, 'tablet');
+      expect(drug.quantity, 25);
+      expect(drug.category, 'Pain Relief');
+      expect(drug.imageUrl, 'https://example.com/img.png');
+      expect(drug.inStock, isTrue);
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('supports legacy price field', () {
+      final drug = Drug.fromMap('drug2', {
+        'name': 'Ibuprofen',
+        'price': 300,
+        'quantity': 0,
+      });
+      expect(drug.pricePerUnit, 300);
+      expect(drug.inStock, isFalse);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('parses expiry date from an ISO string', () {
+      final drug = Drug.fromMap('drug3', {
+        'name': 'Amoxicillin',
+        'pricePerUnit': 1000,
+        'quantity': 5,
+        'expiryDate': '2027-12-31T00:00:00.000',
+      });
+      expect(drug.expiryDate, isNotNull);
+      expect(drug.expiryDate!.year, 2027);
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('parses expiry date from a Firestore Timestamp', () {
+      final drug = Drug.fromMap('drug4', {
+        'name': 'Insulin',
+        'pricePerUnit': 2000,
+        'quantity': 3,
+        'expiryDate': Timestamp.fromDate(DateTime(2026, 6, 1)),
+      });
+      expect(drug.expiryDate, isNotNull);
+      expect(drug.expiryDate!.month, 6);
+    });
+  });
+
+  group('PharmacyHours.isOpenNow', () {
+    test('returns false when hours are missing', () {
+      expect(PharmacyHours.isOpenNow({}), isFalse);
+    });
+
+    test('returns false for malformed times', () {
+      expect(
+        PharmacyHours.isOpenNow({
+          'weekdayOpen': 'garbage',
+          'weekdayClose': '9:00',
+        }),
+        isFalse,
+      );
+    });
+
+    test('returns false when only one time is set', () {
+      expect(
+        PharmacyHours.isOpenNow({'weekdayOpen': '08:00'}),
+        isFalse,
+      );
+    });
   });
 }

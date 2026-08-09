@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
-import 'dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -34,17 +34,83 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainShell()),
-        );
+
+      // Block pharmacy accounts that have been suspended or deleted. The
+      // auth-state stream in main.dart handles all further routing.
+      final user = auth.currentUser;
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('pharmacies')
+            .doc(user.uid)
+            .get();
+        if (doc.exists) {
+          final data = doc.data();
+          final status = data?['status'] as String? ?? 'active';
+          if (status == 'suspended' || status == 'deleted') {
+            await auth.signOut();
+            if (mounted) {
+              setState(() {
+                _errorMessage = status == 'suspended'
+                    ? 'This pharmacy account has been suspended. Contact your administrator.'
+                    : 'This pharmacy account has been deactivated. Contact your administrator.';
+              });
+            }
+            return;
+          }
+        }
       }
     } on FirebaseAuthException catch (e) {
-      setState(() => _errorMessage = e.message ?? 'Login failed.');
+      setState(() => _errorMessage = _friendlyError(e.code, e.message));
     } catch (e) {
       setState(() => _errorMessage = 'An unexpected error occurred.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _friendlyError(String? code, String? message) {
+    if (code == 'invalid-credential' ||
+        code == 'invalid-login-credentials' ||
+        code == 'wrong-password' ||
+        code == 'user-not-found') {
+      return 'Invalid email or password.';
+    }
+    if (code == 'user-disabled') return 'This account has been disabled.';
+    if (code == 'too-many-requests') {
+      return 'Too many attempts. Please try again later.';
+    }
+    if (code == 'network-request-failed') {
+      return 'Network error. Check your connection.';
+    }
+    return message ?? 'Login failed.';
+  }
+
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (!email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter your email address above first.'),
+        ),
+      );
+      return;
+    }
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Password reset link sent to $email'),
+            backgroundColor: AppColors.secondary,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send reset link. Please try again.')),
+        );
+      }
     }
   }
 
@@ -189,7 +255,7 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           _buildLabel('PASSWORD'),
                           TextButton(
-                            onPressed: () {},
+                            onPressed: _forgotPassword,
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,
                               minimumSize: Size.zero,
@@ -310,16 +376,16 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _FooterLink('Support'),
-                                _Dot(),
-                                _FooterLink('Privacy'),
-                                _Dot(),
-                                _FooterLink('Security'),
-                              ],
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _FooterLink('Support'),
+                              _Dot(),
+                              _FooterLink('Privacy'),
+                              _Dot(),
+                              _FooterLink('Security'),
+                            ],
+                          ),
                           ],
                         ),
                       ),

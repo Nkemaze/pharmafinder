@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // First-run bootstrap guard for creating the first administrator.
+    // Keep in sync with AdminConfig.adminSetupCode in lib/config/admin_config.dart.
+    // IMPORTANT: after your first admin is created, remove this function (and the
+    // `hasBootstrapKey()` condition below) and redeploy the rules so that only
+    // existing admins can manage the admins collection.
+    function hasBootstrapKey() {
+      return request.resource.data.setupKey == 'PharmaAdmin#2026';
+    }
+
+    match /admins/{adminId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == adminId);
+      allow create: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == adminId && hasBootstrapKey());
+      allow update, delete: if isAdmin();
+    }
+
+    match /pharmacies/{pharmacyId} {
+      allow read, write: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == pharmacyId);
+      match /{document=**} {
+        allow read, write: if isAdmin() ||
+          (isSignedIn() && request.auth.uid == pharmacyId);
+      }
+    }
+  }
+}

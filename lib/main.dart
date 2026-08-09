@@ -4,8 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
+import 'config/admin_config.dart';
+import 'pages/admin/admin_login_page.dart';
+import 'pages/auth_gate.dart';
 import 'pages/login_page.dart';
-import 'pages/dashboard_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +31,9 @@ class MyApp extends StatelessWidget {
       title: 'PharmaFinder',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
+      routes: {
+        AdminConfig.adminRoutePath: (_) => const AdminLoginPage(),
+      },
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
@@ -37,10 +42,11 @@ class MyApp extends StatelessWidget {
               body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
             );
           }
-          if (snapshot.hasData) {
-            return const MainShell();
+          final user = snapshot.data;
+          if (user == null) {
+            return const LoginPage();
           }
-          return const LoginPage();
+          return AuthGate(user: user);
         },
       ),
     );

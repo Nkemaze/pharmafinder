@@ -4,11 +4,13 @@ import '../theme/app_theme.dart';
 class SidebarNav extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemSelected;
+  final VoidCallback? onLogout;
 
   const SidebarNav({
     super.key,
     required this.selectedIndex,
     required this.onItemSelected,
+    this.onLogout,
   });
 
   static const _navItems = [
@@ -111,9 +113,7 @@ class SidebarNav extends StatelessWidget {
                   _NavTile(
                     item: const _NavItem(icon: Icons.logout_rounded, label: 'Logout'),
                     isSelected: false,
-                    onTap: () {
-                      // handled by parent
-                    },
+                    onTap: onLogout,
                     isDestructive: true,
                   ),
                 ],
