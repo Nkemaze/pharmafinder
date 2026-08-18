@@ -39,5 +39,11 @@ service cloud.firestore {
           (isSignedIn() && request.auth.uid == pharmacyId);
       }
     }
+
+    // Public collection-group read: lets the customer app search every
+    // pharmacy's inventory at once without logging in.
+    match /{path=**}/drugs/{drugId} {
+      allow read: if true;
+    }
   }
 }
