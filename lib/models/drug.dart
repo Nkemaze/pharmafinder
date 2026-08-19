@@ -58,13 +58,9 @@ class Drug {
     }
 
     // Handle legacy single 'price' field
-    final ppu = (map['pricePerUnit'] ?? map['price'] ?? 0).toDouble();
-    final pp = map['pricePerPacket'] != null
-        ? (map['pricePerPacket'] as num).toDouble()
-        : null;
-    final ps = map['packetSize'] != null
-        ? (map['packetSize'] as num).toInt()
-        : null;
+    final ppu = _asDouble(map['pricePerUnit'] ?? map['price']);
+    final pp = _asNullableDouble(map['pricePerPacket']);
+    final ps = _asNullableInt(map['packetSize']);
 
     return Drug(
       id: id,
@@ -73,11 +69,33 @@ class Drug {
       pricePerPacket: pp,
       packetSize: ps,
       unitLabel: map['unitLabel'] ?? 'unit',
-      quantity: (map['quantity'] ?? 0).toInt(),
+      quantity: _asInt(map['quantity']),
       category: map['category'] ?? '',
       expiryDate: exp,
       imageUrl: map['imageUrl'],
       reference: reference,
     );
+  }
+
+  static double _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static double? _asNullableDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  static int _asInt(dynamic value) {
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static int? _asNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
   }
 }

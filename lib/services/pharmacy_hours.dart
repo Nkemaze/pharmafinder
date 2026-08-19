@@ -1,5 +1,22 @@
 class PharmacyHours {
+  /// The manually toggled open/closed state, or null when the pharmacy is
+  /// following its schedule. Stored at `hours._manualOpen` so the customer
+  /// app (which reads the same field) stays in sync.
+  static bool? manualOpen(Map<String, dynamic> data) {
+    final hours = data['hours'];
+    if (hours is Map && hours.containsKey('_manualOpen')) {
+      return hours['_manualOpen'] == true;
+    }
+    return null;
+  }
+
+  static bool hasManualOverride(Map<String, dynamic> data) =>
+      manualOpen(data) != null;
+
   static bool isOpenNow(Map<String, dynamic> data) {
+    final manual = manualOpen(data);
+    if (manual != null) return manual;
+
     final now = DateTime.now();
     final isWeekend = now.weekday == 6 || now.weekday == 7;
 

@@ -15,6 +15,50 @@ class _StoreStatusContentState extends State<StoreStatusContent> {
   DocumentReference get _pharmacyRef =>
       FirebaseFirestore.instance.collection('pharmacies').doc(_pharmacyId);
 
+  bool _toggling = false;
+
+  /// Writes the manual open/closed override. The full `hours` map is written
+  /// (schedule + flag) because the customer app prefers the nested `hours`
+  /// map when it exists.
+  Future<void> _setStoreOpen(bool open, Map<String, dynamic> data) async {
+    setState(() => _toggling = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _pharmacyRef.update({
+        'hours': {
+          'weekdayOpen': data['weekdayOpen'],
+          'weekdayClose': data['weekdayClose'],
+          'weekendOpen': data['weekendOpen'],
+          'weekendClose': data['weekendClose'],
+          '_manualOpen': open,
+        },
+      });
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error updating store status: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _toggling = false);
+    }
+  }
+
+  /// Removes the manual override so the schedule decides the status again.
+  Future<void> _resetToSchedule() async {
+    setState(() => _toggling = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _pharmacyRef.update({
+        'hours._manualOpen': FieldValue.delete(),
+      });
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Error updating store status: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _toggling = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
@@ -34,6 +78,8 @@ class _StoreStatusContentState extends State<StoreStatusContent> {
         final isOpen = data != null && data.isNotEmpty
             ? PharmacyHours.isOpenNow(data)
             : false;
+        final hasOverride =
+            data != null && PharmacyHours.hasManualOverride(data);
         final avgOpenHours = data?['avgOpenHours']?.toString() ?? '—';
         final activityLevel = data?['activityLevel']?.toString() ?? '—';
         final trustScore = data?['trustScore']?.toString() ?? '—';
@@ -154,6 +200,63 @@ class _StoreStatusContentState extends State<StoreStatusContent> {
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Manual status toggle
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.outlineVariant
+                                .withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Manual status control',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    hasOverride
+                                        ? 'Manual override is active. Reset to follow your schedule.'
+                                        : 'Overrides your schedule so you can open or close early.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.onSurfaceVariant
+                                          .withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (hasOverride)
+                              TextButton(
+                                onPressed:
+                                    _toggling ? null : _resetToSchedule,
+                                child: const Text('Reset to schedule'),
+                              ),
+                            Switch(
+                              value: isOpen,
+                              onChanged: _toggling
+                                  ? null
+                                  : (v) => _setStoreOpen(v, data ?? const {}),
+                              activeThumbColor: AppColors.secondary,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 32),

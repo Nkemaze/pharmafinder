@@ -37,6 +37,21 @@ void main() {
       expect(drug.inStock, isFalse);
     });
 
+    test('parses numeric values stored as strings', () {
+      final drug = Drug.fromMap('drug-string-values', {
+        'name': 'Vitamin C',
+        'pricePerUnit': '750.50',
+        'pricePerPacket': '7000',
+        'packetSize': '10',
+        'quantity': '12',
+      });
+
+      expect(drug.pricePerUnit, 750.50);
+      expect(drug.pricePerPacket, 7000);
+      expect(drug.packetSize, 10);
+      expect(drug.quantity, 12);
+    });
+
     test('parses expiry date from an ISO string', () {
       final drug = Drug.fromMap('drug3', {
         'name': 'Amoxicillin',
@@ -79,6 +94,45 @@ void main() {
       expect(
         PharmacyHours.isOpenNow({'weekdayOpen': '08:00'}),
         isFalse,
+      );
+    });
+
+    test('manual override forces open regardless of schedule', () {
+      expect(
+        PharmacyHours.isOpenNow({
+          'weekdayOpen': '00:00',
+          'weekdayClose': '00:01',
+          'hours': {'_manualOpen': true},
+        }),
+        isTrue,
+      );
+    });
+
+    test('manual override forces closed regardless of schedule', () {
+      expect(
+        PharmacyHours.isOpenNow({
+          'weekdayOpen': '00:00',
+          'weekdayClose': '23:59',
+          'hours': {'_manualOpen': false},
+        }),
+        isFalse,
+      );
+    });
+
+    test('hasManualOverride reflects the flag', () {
+      expect(PharmacyHours.hasManualOverride({}), isFalse);
+      expect(
+        PharmacyHours.hasManualOverride({
+          'hours': {'_manualOpen': false},
+        }),
+        isTrue,
+      );
+      expect(PharmacyHours.manualOpen({'hours': <String, dynamic>{}}), isNull);
+      expect(
+        PharmacyHours.manualOpen({
+          'hours': {'_manualOpen': true},
+        }),
+        isTrue,
       );
     });
   });

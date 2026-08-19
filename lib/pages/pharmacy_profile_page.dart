@@ -182,6 +182,12 @@ class _PharmacyProfilePageState extends State<PharmacyProfilePage> {
         'weekdayClose': _formatTimeOfDay(_weekdayClose),
         'weekendOpen': _formatTimeOfDay(_weekendOpen),
         'weekendClose': _formatTimeOfDay(_weekendClose),
+        // Keep the nested hours map (read by the customer app) in sync.
+        // Dot paths preserve any existing `hours._manualOpen` override.
+        'hours.weekdayOpen': _formatTimeOfDay(_weekdayOpen),
+        'hours.weekdayClose': _formatTimeOfDay(_weekdayClose),
+        'hours.weekendOpen': _formatTimeOfDay(_weekendOpen),
+        'hours.weekendClose': _formatTimeOfDay(_weekendClose),
         'emergencyPhone': _emergencyPhoneController.text.trim(),
         'emergencyDesc': _emergencyDescController.text.trim(),
         if (_selectedLocation != null) ...{

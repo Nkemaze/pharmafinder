@@ -354,7 +354,9 @@ class _DrugManagementPageState extends State<DrugManagementPage> {
                       ],
                     ),
                     Text(
-                      'Showing ${startIndex + 1}-${(startIndex + _pageSize).clamp(1, filtered.length)} of ${filtered.length} drugs',
+                      filtered.isEmpty
+                          ? 'No drugs to display'
+                          : 'Showing ${startIndex + 1}-${(startIndex + _pageSize).clamp(1, filtered.length)} of ${filtered.length} drugs',
                       style: const TextStyle(
                           fontSize: 13, color: AppColors.onSurfaceVariant),
                     ),
@@ -376,11 +378,22 @@ class _DrugManagementPageState extends State<DrugManagementPage> {
                   children: [
                     if (pageDrugs.isEmpty)
                       const SizedBox(
-                        height: 200,
+                        height: 240,
                         child: Center(
-                          child: Text(
-                            'No drugs match the selected filters.',
-                            style: TextStyle(color: AppColors.onSurfaceVariant),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.medication_outlined,
+                                size: 40,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'No drugs match the selected filters.',
+                                style: TextStyle(color: AppColors.onSurfaceVariant),
+                              ),
+                            ],
                           ),
                         ),
                       )
@@ -1110,11 +1123,25 @@ class _DrugDialogState extends State<_DrugDialog> {
     );
   }
 
+  static const _defaultUnitLabels = [
+    'unit', 'tablet', 'capsule', 'bottle', 'sachet', 'strip', 'pack', 'box', 'vial',
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final existingCategories =
+        widget.categories.where((c) => c != 'All Categories').toList();
     final allCategories = ['Antibiotics', 'Pain Relief', 'Cardiology', 'Diabetes', 'Vitamins', 'Other']
-        .where((c) => !widget.categories.contains(c)).toList();
-    final categoryOptions = ['', ...widget.categories, ...allCategories];
+        .where((c) => !existingCategories.contains(c)).toList();
+    final categoryOptions = ['', ...existingCategories, ...allCategories];
+    if (_category.isNotEmpty && !categoryOptions.contains(_category)) {
+      categoryOptions.add(_category);
+    }
+
+    final unitOptions = List<String>.from(_defaultUnitLabels);
+    if (_unitLabel.isNotEmpty && !unitOptions.contains(_unitLabel)) {
+      unitOptions.add(_unitLabel);
+    }
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -1185,12 +1212,13 @@ class _DrugDialogState extends State<_DrugDialog> {
                           DropdownButtonFormField<String>(
                             initialValue: _unitLabel,
                             decoration: const InputDecoration(hintText: 'e.g. unit, pack'),
-                            items: const [
-                              DropdownMenuItem(value: 'unit', child: Text('Unit')),
-                              DropdownMenuItem(value: 'pack', child: Text('Pack')),
-                              DropdownMenuItem(value: 'box', child: Text('Box')),
-                              DropdownMenuItem(value: 'bottle', child: Text('Bottle')),
-                            ],
+                            items: unitOptions
+                                .map((u) => DropdownMenuItem(
+                                      value: u,
+                                      child: Text(
+                                          u[0].toUpperCase() + u.substring(1)),
+                                    ))
+                                .toList(),
                             onChanged: (v) => setState(() => _unitLabel = v ?? 'unit'),
                           ),
                         ]),

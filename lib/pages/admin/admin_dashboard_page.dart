@@ -83,15 +83,11 @@ class _AdminSidebar extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
             child: Row(
               children: [
-                Container(
+                Image.asset(
+                  'assets/images/icon.png',
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(Icons.admin_panel_settings_outlined,
-                      color: Colors.white, size: 20),
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(width: 12),
                 const Column(
